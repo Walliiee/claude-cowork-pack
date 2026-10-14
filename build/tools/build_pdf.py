@@ -1,5 +1,7 @@
-import markdown, pathlib
-root = pathlib.Path(__file__).resolve().parent.parent
+"""Build the guide PDF from GUIDE.md. Usage: python3 build/tools/build_pdf.py"""
+import markdown, pathlib, subprocess
+root = pathlib.Path(__file__).resolve().parents[2]
+build = root / 'build'
 md = (root/'GUIDE.md').read_text()
 body = markdown.markdown(md, extensions=['tables','fenced_code'])
 i = body.rfind('<h2>Sources'); body = body[:i] + '<div class="sources">' + body[i:] + '</div>'
@@ -21,6 +23,15 @@ li { margin: 2pt 0; }
 h2:last-of-type ~ ol { font-size: 9pt; color:#66525F; }
 .footer { margin-top:24pt; padding:8pt 12pt; background:#F89404; color:#451D3E; border-radius:12px; font-weight:600;}
 """
-(root/'build').mkdir(exist_ok=True)
+(build/'out').mkdir(exist_ok=True)
 html = f"<html><head><meta charset='utf-8'><title>Claude Cowork Pack | Krohn AI</title><style>{css}</style></head><body>{body}<div class='footer'>Krohn AI · mikekrohn.ai · Company AI setups for small, owner-led businesses.</div></body></html>"
-(root/'build'/'guide.html').write_text(html)
+out = build/'out'/'guide.html'
+out.write_text(html)
+pdf = root/'claude-cowork-pack.pdf'
+subprocess.run(['google-chrome','--headless=new','--no-sandbox','--disable-gpu','--no-pdf-header-footer',f'--print-to-pdf={pdf}',out.as_uri()],check=True,stderr=subprocess.DEVNULL)
+shots = build/'screenshots'
+for f in shots.glob('page-*.png'): f.unlink()
+subprocess.run(['pdftoppm','-png','-r','70',str(pdf),str(shots/'pg')],check=True,stderr=subprocess.DEVNULL)
+for f in shots.glob('pg-*.png'):
+    f.rename(shots/f"page-{int(f.stem.split('-')[1])}.png")
+print(pdf)

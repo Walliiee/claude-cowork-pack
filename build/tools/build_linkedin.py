@@ -1,10 +1,11 @@
 """Build the LinkedIn carousel (1080x1350, 4:5) from linkedin-outline.md content.
-Images: visuals/cover.png, uc3.png ... uc7.png are used when present; otherwise a marked placeholder is drawn.
-Usage: python3 tools/build_linkedin.py   (writes build/linkedin.html and claude-cowork-pack-linkedin.pdf)
+Images: build/visuals/cover.png, uc3.png ... uc7.png are used when present; otherwise a marked placeholder is drawn.
+Usage: python3 build/tools/build_linkedin.py   (writes build/out/linkedin.html and claude-cowork-pack-linkedin.pdf)
 """
 import pathlib, subprocess, html as H
-root = pathlib.Path(__file__).resolve().parent.parent
-vis = root / 'visuals'
+root = pathlib.Path(__file__).resolve().parents[2]
+build = root / 'build'
+vis = build / 'visuals'
 
 def slot(name, size, cls):
     f = vis / name
@@ -42,7 +43,7 @@ items = [("👤","Write your instructions for Claude"),("🔌","Connect two or t
 pages.append("<div class='p'><h2>Set it up in 20 minutes</h2>" + "".join(f"<div class='chk'><span class='dot'>{i}</span>{t}</div>" for i,t in items) + foot(8) + "</div>")
 safe = ["Start on Manual: Claude asks first.","Give it the smallest folder.","Keep originals out of reach.","Review anything that sends or deletes."]
 pages.append("<div class='p'><h2>Four safety habits</h2>" + "".join(f"<div class='safe'><span class='tick'>✓</span>{t}</div>" for t in safe) + foot(9) + "</div>")
-pages.append(f"""<div class='p cover'><h2 class='light'>Get the free pack: templates, five skills, setup guide.</h2>
+pages.append(f"""<div class='p cover'><h2 class='light'>Get the free pack: templates, eight skills, setup guide.</h2>
 <div class='url'>github.com/Walliiee/claude-cowork-pack</div>
 {slot('logo.png','square, optional','logo') if (vis/'logo.png').exists() else ''}
 <div class='brand'>Krohn AI<br><span>mikekrohn.ai</span></div></div>""")
@@ -85,12 +86,12 @@ h2.light { color:#F7E7D0; font-size:76px; margin-top:120px; }
 .foot { position:absolute; bottom:56px; left:90px; font-size:26px; color:#66525F; }
 .num { position:absolute; bottom:56px; right:90px; font-size:26px; color:#66525F; }
 """
-(root/'build').mkdir(exist_ok=True)
-out = root/'build'/'linkedin.html'
+(build/'out').mkdir(exist_ok=True)
+out = build/'out'/'linkedin.html'
 out.write_text(f"<html><head><meta charset='utf-8'><title>Claude Cowork: 5 simple use cases for everyday work</title><style>{css}</style></head><body>{''.join(pages)}</body></html>")
 pdf = root/'claude-cowork-pack-linkedin.pdf'
 subprocess.run(['google-chrome','--headless=new','--no-sandbox','--disable-gpu','--no-pdf-header-footer','--allow-file-access-from-files',f'--print-to-pdf={pdf}',out.as_uri()],check=True,stderr=subprocess.DEVNULL)
-shots = root/'screenshots'
+shots = build/'screenshots'
 for f in shots.glob('linkedin-page-*.png'): f.unlink()
 subprocess.run(['pdftoppm','-png','-r','40',str(pdf),str(shots/'li')],check=True,stderr=subprocess.DEVNULL)
 for f in shots.glob('li-*.png'):

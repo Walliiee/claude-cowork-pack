@@ -68,7 +68,7 @@ Current limitations listed by Anthropic [2]: "Add from GitHub" is not supported,
 
 ## 5. Skills: one file, two places
 
-The five skills in `.claude/skills/` follow the Agent Skills format: a folder with a `SKILL.md` that has a `name` and a `description` [5].
+The eight skills in `.claude/skills/` follow the Agent Skills format: a folder with a `SKILL.md` that has a `name` and a `description` [5].
 
 - **Claude Code** loads them from `.claude/skills/` in your project. Type `/draft-pr`, `/changelog` and so on, or let Claude pick one when the description matches.
 - **Claude (chat and Cowork)** does not read skills from your disk. Upload a skill to your claude.ai account to use it there. Uploads accept only the spec fields `name`, `description`, `license`, `compatibility`, `metadata` and `allowed-tools`, so this pack's skills use only `name` and `description` [5].
@@ -77,6 +77,9 @@ Custom commands are now part of skills in Claude Code. The old `.claude/commands
 
 | Skill | Use it when |
 |---|---|
+| `weekly-report` | The Monday report from the sales sheet in Drive |
+| `morning-digest` | A weekday summary of your team's Slack channels |
+| `compare-tools` | Picking a tool or supplier, with sources |
 | `draft-pr` | A tested change is ready for review |
 | `explain-codebase` | You start on a repo you do not know |
 | `research-note` | You need a sourced answer, not a guess |
@@ -110,9 +113,9 @@ Custom commands are now part of skills in Claude Code. The old `.claude/commands
 | `cowork/task-brief.md` | Your first message for a new task |
 | `cowork/scheduled-task.md` | Scheduled > New task > Set up manually |
 | `CLAUDE.md`, `.claude/`, `.mcp.json.example` | The root of a code project, for Claude Code |
-| `.claude/skills/*` | Claude Code as-is; upload a folder to claude.ai to use it in Claude |
+| `.claude/skills/*` | Three office skills and five developer skills. Claude Code loads them as-is; upload a folder to claude.ai to use it in Claude |
 
-Get the latest version at github.com/Walliiee/claude-cowork-pack (planned). Licence: MIT.
+Get the latest version at github.com/Walliiee/claude-cowork-pack. Licence: MIT.
 
 ## Sources
 

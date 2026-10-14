@@ -114,7 +114,7 @@ Sources: Manual is the default, Auto is opt-in [2]; review work with real conseq
 ## Slide 10: Closing CTA
 
 Body:
-> Get the free pack: templates, five skills, setup guide.
+> Get the free pack: templates, eight skills, setup guide.
 > github.com/Walliiee/claude-cowork-pack
 > Krohn AI · mikekrohn.ai
 
