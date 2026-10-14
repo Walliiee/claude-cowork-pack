@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/absolute/path/to/your/project"]
+    },
+    "your-server": {
+      "command": "npx",
+      "args": ["-y", "<an-mcp-server-package>"],
+      "env": { "API_KEY": "<set-this-locally-never-commit-it>" }
+    }
+  }
+}
