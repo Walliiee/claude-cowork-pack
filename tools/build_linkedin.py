@@ -1,81 +1,98 @@
-import pathlib
+"""Build the LinkedIn carousel (1080x1350, 4:5) from linkedin-outline.md content.
+Images: visuals/cover.png, uc3.png ... uc7.png are used when present; otherwise a marked placeholder is drawn.
+Usage: python3 tools/build_linkedin.py   (writes build/linkedin.html and claude-cowork-pack-linkedin.pdf)
+"""
+import pathlib, subprocess, html as H
 root = pathlib.Path(__file__).resolve().parent.parent
-pages = [
-("cover", """<div class='kicker'>Krohn AI · October 2026</div>
-<h1>Claude Cowork Pack</h1>
-<p class='promise'>Set up Claude to finish whole tasks for you, now that chat and Cowork are one app.</p>
-<div class='brand'>Krohn AI<br><span>mikekrohn.ai</span></div>"""),
-("", """<h2>What changed</h2>
-<p>On 16 September 2026 Anthropic announced that Claude Cowork and chat are merging into one Claude.</p>
-<ul><li>No mode to pick. Claude decides if a quick answer or a longer task fits.</li>
-<li>Pro and Max first. Team and Free later. Enterprise gets 30 days' notice.</li>
-<li>Once your account moves over, you can't switch back.</li>
-<li>Cowork tasks, projects, connectors, skills and files carry over.</li></ul>"""),
-("", """<h2>Chat vs Cowork</h2>
-<table><tr><th></th><th>Chat</th><th>Cowork</th></tr>
-<tr><td>For</td><td>Questions, drafts</td><td>Whole tasks, many steps</td></tr>
-<tr><td>Output</td><td>Answers in the chat</td><td>Finished files</td></tr>
-<tr><td>Runs while you're away</td><td>No</td><td>Yes</td></tr>
-<tr><td>Local files</td><td>No</td><td>Yes, in Claude Desktop</td></tr></table>
-<p>After the merge: both, in one conversation.</p>"""),
-("", """<h2>When to use what</h2>
-<ul><li><b>Desktop</b> when the task needs files on your computer or the browser. Web and phone reach your connected apps only.</li>
-<li><b>Manual</b> (default): Claude asks before each action. Use <b>Auto</b> only for tasks you trust.</li>
-<li><b>Claude Code</b> for software work in a repository.</li></ul>"""),
-("", """<h2>What Claude can do on a longer task</h2>
-<ul><li>Search the web, read your files, run code</li>
-<li>Keep running in the cloud after you close the laptop</li>
-<li>Return Word, Excel and PowerPoint files</li>
-<li>Use Drive, Gmail, Microsoft 365, Slack</li>
-<li>Run on a schedule, e.g. every Monday at 8</li></ul>"""),
-("", """<h2>Set it up in 20 minutes</h2>
-<ol><li>Write your Instructions for Claude (Settings &gt; General)</li>
-<li>Connect the 2 or 3 apps your work lives in</li>
-<li>One folder per recurring job: inputs, output, scratch</li>
-<li>Brief the first task: outcome, format, inputs</li>
-<li>Schedule one weekly report, on Manual</li></ol>"""),
-("", """<h2>A brief that works</h2>
-<div class='code'>Outcome: a comparison of five project tools<br>
-Format: a spreadsheet + half-page summary<br>
-Inputs: web research, ./inputs/process.md<br>
-Limits: no trial sign-ups<br>
-Done when: every row has a source link</div>
-<p>The pack has templates for this, for instructions, folders and scheduled tasks.</p>"""),
-("", """<h2>Safety habits</h2>
-<ul><li>Start every new kind of task on Manual</li>
-<li>Give Claude the smallest folder that does the job</li>
-<li>Keep originals where Claude doesn't edit</li>
-<li>Review each step when it sends messages or changes important files</li></ul>
-<p class='src'>Sources: claude.com/blog/cowork-is-now-claude (16 Sep 2026); support.claude.com/en/articles/16761823. Checked 14 Oct 2026.</p>"""),
-("cover", """<h2 class='light'>Get the full pack</h2>
-<p class='promise'>Templates, five skills and a ready Claude Code setup. Free, MIT licence.</p>
-<p class='url'>github.com/Walliiee/claude-cowork-pack</p>
-<div class='brand'>Krohn AI<br><span>mikekrohn.ai</span></div>"""),
-]
+vis = root / 'visuals'
+
+def slot(name, size, cls):
+    f = vis / name
+    if f.exists():
+        return f"<div class='slot {cls}'><img src='{f.as_uri()}'></div>"
+    return f"<div class='slot {cls} ph'><div>IMAGE SLOT<br><b>visuals/{name}</b><br>supply {size}<br>shown {"900x500 card" if cls=="hero" else ("900x400 crop" if cls=="panel" else "220x220")}</div></div>"
+
+def foot(n):
+    return f"<div class='foot'>Krohn AI · mikekrohn.ai</div><div class='num'>{n}/10</div>"
+
+def usecase(n, title, img, size, inp, does, get, prompt, beta=False):
+    tag = "<span class='beta'>beta</span>" if beta else ""
+    return f"""<div class='p uc'>{slot(img, size, 'panel')}
+<h2>{H.escape(title)}{tag}</h2>
+<div class='flow'>
+<div class='box'><div class='lbl'>Input</div>{H.escape(inp)}</div><div class='arr'>›</div>
+<div class='box'><div class='lbl'>Claude</div>{H.escape(does)}</div><div class='arr'>›</div>
+<div class='box hl'><div class='lbl'>You get</div>{H.escape(get)}</div></div>
+<div class='prompt'>“{H.escape(prompt)}”</div>{foot(n)}</div>"""
+
+pages = []
+pages.append(f"""<div class='p cover'>{slot('cover.png', '1080x1350 hero', 'hero')}<div class='shade'></div>
+<h1>Hand Claude the task. Get the file back.</h1>
+<div class='brand'>Krohn AI<br><span>mikekrohn.ai</span></div></div>""")
+pages.append(f"""<div class='p'><h2>Chat vs Cowork in one line</h2>
+<div class='band b1'><span class='ic'>💬</span>Chat: you ask, it answers.</div>
+<div class='band b2'><span class='ic'>📁</span>Cowork: you hand over a task, you get files back.</div>
+<div class='band b3'><span class='ic'>💬+📁</span>Now: one Claude does both.</div>{foot(2)}</div>""")
+pages.append(usecase(3, "The weekly report you stop writing", "uc3.png", "4:5 panel", "Sales sheet in Drive", "Flags what slipped, drafts slides", "Report and deck, every Monday", "Summarise last week's pipeline. Five slides.", beta=True))
+pages.append(usecase(4, "Your morning digest, before you sit down", "uc4.png", "4:5 panel", "Team Slack channels", "Reads new messages each weekday", "One short summary", "Weekdays at 8 AM: summarise new Slack messages."))
+pages.append(usecase(5, "Compare tools, with sources attached", "uc5.png", "4:5 panel", "Your requirements", "Searches the web, compares options", "Spreadsheet plus one-page summary", "Compare five project tools. Source links."))
+pages.append(usecase(6, "Clean up the shared folder", "uc6.png", "4:5 panel", "One folder on your computer", "Sorts files by type and date", "A tidy folder", "Sort this folder by type and date."))
+pages.append(usecase(7, "From notes to a deck you can present", "uc7.png", "1080x1350 hero", "Interview notes", "Pulls themes and quotes", "A doc and a 10-slide deck", "Top themes, one quote each, 10 slides.", beta=True))
+items = [("👤","Write your instructions for Claude"),("🔌","Connect two or three apps"),("📁","Make one working folder"),("💬","Brief one real task"),("📅","Schedule one weekly report")]
+pages.append("<div class='p'><h2>Set it up in 20 minutes</h2>" + "".join(f"<div class='chk'><span class='dot'>{i}</span>{t}</div>" for i,t in items) + foot(8) + "</div>")
+safe = ["Start on Manual: Claude asks first.","Give it the smallest folder.","Keep originals out of reach.","Review anything that sends or deletes."]
+pages.append("<div class='p'><h2>Four safety habits</h2>" + "".join(f"<div class='safe'><span class='tick'>✓</span>{t}</div>" for t in safe) + foot(9) + "</div>")
+pages.append(f"""<div class='p cover'><h2 class='light'>Get the free pack: templates, five skills, setup guide.</h2>
+<div class='url'>github.com/Walliiee/claude-cowork-pack</div>
+{slot('logo.png','square, optional','logo') if (vis/'logo.png').exists() else ''}
+<div class='brand'>Krohn AI<br><span>mikekrohn.ai</span></div></div>""")
+
 css = """
 @page { size: 1080px 1350px; margin: 0; }
 body { margin:0; font-family: Inter, sans-serif; }
-.p { width:1080px; height:1350px; box-sizing:border-box; padding:110px 100px; background:#F7E7D0; color:#5A4353; font-size:38px; line-height:1.45; page-break-after:always; position:relative; overflow:hidden; }
+.p { width:1080px; height:1350px; box-sizing:border-box; padding:100px 90px; background:#F7E7D0; color:#5A4353; font-size:40px; line-height:1.35; page-break-after:always; position:relative; overflow:hidden; }
+.p:not(.cover)::before { content:''; position:absolute; top:0; left:0; right:0; height:22px; background:#F89404; z-index:2; }
 .p.cover { background:#451D3E; color:#F7E7D0; }
-.p:not(.cover)::before { content:''; position:absolute; top:0; left:0; right:0; height:22px; background:#F89404; }
-.num { position:absolute; bottom:60px; right:100px; font-size:26px; color:#66525F; }
-.foot { position:absolute; bottom:60px; left:100px; font-size:26px; color:#66525F; }
-h1 { font-family:Fraunces, serif; font-size:120px; line-height:1.02; color:#F7E7D0; margin:40px 0; letter-spacing:-0.02em; }
-h2 { font-family:Fraunces, serif; font-size:72px; line-height:1.1; color:#451D3E; margin:0 0 50px; letter-spacing:-0.01em; }
-h2.light { color:#F7E7D0; }
-.kicker { color:#F89404; font-size:32px; font-weight:600; margin-top:120px; }
-.promise { font-size:48px; line-height:1.35; }
-.brand { position:absolute; bottom:110px; left:100px; font-family:Fraunces, serif; font-size:52px; font-weight:700; color:#F89404; }
+h1 { position:relative; z-index:2; font-family:Fraunces, serif; font-size:112px; line-height:1.02; color:#F7E7D0; margin:80px 0 0; letter-spacing:-0.02em; }
+h2 { font-family:Fraunces, serif; font-size:68px; line-height:1.08; color:#451D3E; margin:0 0 40px; letter-spacing:-0.01em; }
+h2.light { color:#F7E7D0; font-size:76px; margin-top:120px; }
+.slot.ph { border:6px dashed #F89404; background:repeating-linear-gradient(45deg,#F0DCBE,#F0DCBE 20px,#E4CCA9 20px,#E4CCA9 40px); display:flex; align-items:center; justify-content:center; text-align:center; color:#451D3E; font-size:30px; font-family:'DM Mono',monospace; box-sizing:border-box; }
+.slot.ph div { background:#F7E7D0; padding:14px 22px; border-radius:12px; }
+.slot img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.slot.hero { position:absolute; left:90px; right:90px; bottom:250px; height:500px; border-radius:30px; overflow:hidden; }
+.shade { position:absolute; left:0; right:0; bottom:300px; height:600px; display:none; }
+.cover .slot.ph div { position:relative; z-index:3; }
+.brand { position:absolute; bottom:90px; left:90px; font-family:Fraunces, serif; font-size:54px; font-weight:700; color:#F89404; z-index:3; }
 .brand span { font-family:Inter, sans-serif; font-size:34px; color:#F7E7D0; font-weight:400; }
-.url { font-family:'DM Mono', monospace; font-size:33px; white-space:nowrap; background:#F89404; color:#451D3E; padding:24px 30px; border-radius:24px; display:inline-block; margin-top:30px; }
-li { margin:0 0 28px; } b { color:#451D3E; }
-table { border-collapse:collapse; width:100%; font-size:34px; margin-bottom:40px; }
-th { background:#451D3E; color:#F7E7D0; text-align:left; padding:18px; }
-td { padding:18px; border-bottom:2px solid #E4CCA9; vertical-align:top; }
-tr:nth-child(odd) td { background:#F0DCBE; }
-.code { font-family:'DM Mono', monospace; font-size:32px; background:#F0DCBE; color:#451D3E; padding:36px; border-radius:24px; margin-bottom:40px; line-height:1.6; }
-.src { font-size:26px; color:#66525F; margin-top:60px; }
+.slot.panel { height:400px; border-radius:30px; overflow:hidden; margin:10px 0 44px; }
+.beta { font-family:Inter, sans-serif; font-size:24px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; background:#F89404; color:#451D3E; border-radius:999px; padding:6px 16px; margin-left:18px; vertical-align:middle; }
+.flow { display:flex; align-items:stretch; gap:10px; margin-bottom:40px; }
+.box { flex:1; background:#F0DCBE; border-radius:24px; padding:24px 22px; font-size:32px; line-height:1.25; color:#451D3E; }
+.box.hl { background:#451D3E; color:#F7E7D0; }
+.lbl { font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#6F3C70; margin-bottom:10px; }
+.hl .lbl { color:#F89404; }
+.arr { align-self:center; font-size:56px; color:#F89404; font-weight:700; }
+.prompt { font-family:'DM Mono',monospace; font-size:32px; color:#451D3E; border-left:8px solid #F89404; padding:8px 0 8px 26px; }
+.band { display:flex; align-items:center; gap:30px; border-radius:30px; padding:46px 40px; margin-bottom:30px; font-size:46px; line-height:1.2; color:#451D3E; font-weight:500; }
+.b1 { background:#FFF6EA; } .b2 { background:#F0DCBE; } .b3 { background:#F89404; font-weight:700; }
+.ic { font-size:56px; min-width:150px; text-align:center; }
+.chk, .safe { display:flex; align-items:center; gap:34px; font-size:44px; color:#451D3E; margin-bottom:46px; }
+.dot { width:96px; height:96px; border-radius:50%; background:#F89404; display:flex; align-items:center; justify-content:center; font-size:46px; flex-shrink:0; }
+.tick { width:70px; height:70px; border-radius:50%; background:#451D3E; color:#F89404; display:flex; align-items:center; justify-content:center; font-size:40px; flex-shrink:0; }
+.safe { font-size:50px; margin-bottom:60px; }
+.url { font-family:'DM Mono', monospace; font-size:36px; white-space:nowrap; background:#F89404; color:#451D3E; padding:26px 32px; border-radius:24px; display:inline-block; margin-top:20px; }
+.slot.logo { position:absolute; right:90px; bottom:90px; width:220px; height:220px; border-radius:24px; overflow:hidden; font-size:22px; }
+.foot { position:absolute; bottom:56px; left:90px; font-size:26px; color:#66525F; }
+.num { position:absolute; bottom:56px; right:90px; font-size:26px; color:#66525F; }
 """
-html = "".join(f"<div class='p {c}'>{b}" + ("" if c else f"<div class='foot'>Krohn AI · mikekrohn.ai</div><div class='num'>{i+1}/{len(pages)}</div>") + "</div>" for i,(c,b) in enumerate(pages))
 (root/'build').mkdir(exist_ok=True)
-(root/'build'/'linkedin.html').write_text(f"<html><head><meta charset='utf-8'><title>Claude Cowork Pack | Krohn AI</title><style>{css}</style></head><body>{html}</body></html>")
+out = root/'build'/'linkedin.html'
+out.write_text(f"<html><head><meta charset='utf-8'><title>Claude Cowork: 5 simple use cases for everyday work</title><style>{css}</style></head><body>{''.join(pages)}</body></html>")
+pdf = root/'claude-cowork-pack-linkedin.pdf'
+subprocess.run(['google-chrome','--headless=new','--no-sandbox','--disable-gpu','--no-pdf-header-footer','--allow-file-access-from-files',f'--print-to-pdf={pdf}',out.as_uri()],check=True,stderr=subprocess.DEVNULL)
+shots = root/'screenshots'
+for f in shots.glob('linkedin-page-*.png'): f.unlink()
+subprocess.run(['pdftoppm','-png','-r','40',str(pdf),str(shots/'li')],check=True,stderr=subprocess.DEVNULL)
+for f in shots.glob('li-*.png'):
+    f.rename(shots/f"linkedin-page-{int(f.stem.split('-')[1])}.png")
+print(pdf)
